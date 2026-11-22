@@ -19,3 +19,6 @@ These rules bind every skill and every run. The code enforces them; this file st
 8. **Retired stays retired.** Ideas in the retired list are never proposed again.
 9. **Frozen truth.** Truth tuples are Python tuples with a printed fingerprint. A run whose
    fingerprint differs from the last run is flagged.
+10. **Check the tools, not just their results.** Every factoring tool lives in the frozen tool
+    tuple, is fingerprinted from its own source code, must reproduce a known answer, and must
+    fail on a prime. A tool that fails any of these is never run.

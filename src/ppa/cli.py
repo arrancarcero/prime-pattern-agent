@@ -11,7 +11,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run the agent")
     r.add_argument("--intent", default="all",
-                   help="all | explore | dr_gap | fano | spectrum | gates | randomness | nature | curves")
+                   help="all | explore | dr_gap | fano | spectrum | gates | randomness | nature | curves | factoring")
     r.add_argument("--max", type=float, help="override range.max_n")
     r.add_argument("--config", default="agent.toml")
     r.add_argument("--steps", type=int, help="override planner.max_steps")
@@ -19,6 +19,7 @@ def main(argv=None):
     t = sub.add_parser("truth", help="self-test the truth tuple")
     t.add_argument("--exp", type=int, default=8)
     sub.add_parser("contract", help="print the agent contract")
+    sub.add_parser("tools", help="fingerprint and calibrate the factoring tool tuple")
     a = ap.parse_args(argv)
 
     if a.cmd == "skills":
@@ -33,6 +34,11 @@ def main(argv=None):
             bad += v.ok is False
             print("PASS" if v.ok else "FAIL", v.key, v.args, v.got, v.note)
         print("ALL PASS" if not bad else f"{bad} FAILED")
+    elif a.cmd == "tools":
+        from ppa.truth.tool_tuple import TOOL_TUPLE, fingerprint, verify_tools
+        print("tool tuple fingerprint", fingerprint())
+        for (name, ok, null_ok), t in zip(verify_tools(), TOOL_TUPLE):
+            print(f"{name:10} known answer {'PASS' if ok else 'FAIL'}  null prime {'PASS' if null_ok else 'FAIL'}  catches: {t.catches}")
     elif a.cmd == "contract":
         p = Path(__file__).resolve().parents[2] / "CONTRACT.md"
         print(p.read_text(encoding="utf-8") if p.exists() else "CONTRACT.md not found")
