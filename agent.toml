@@ -1,0 +1,25 @@
+# Prime-Pattern Agent configuration.
+# Every run reads this file. Change numbers here, not in the code.
+
+[range]
+max_n = 1e8            # sieve up to this number
+# train = lower half of [max_n/10, max_n), test = upper half (decade holdout)
+
+[thresholds]
+z_survive = 4.0        # held-out z-score a pattern must beat
+corr_survive = 0.5     # train/test residual pattern correlation it must beat
+randomness_z = 4.0     # |z| above this on any randomness row = not random
+
+[planner]
+max_steps = 24         # hypotheses tested per agent run
+start_moduli = [3, 4, 5, 8, 9, 10, 12, 24]
+start_lags = [1]
+max_modulus = 72
+max_lag = 3
+
+[null_model]
+wheel = 210            # random-prime model keeps the wheel of 2*3*5*7
+seed = 20261121
+
+[output]
+runs_dir = "runs"
