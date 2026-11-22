@@ -29,3 +29,13 @@ def test_null_model_is_sorted_and_on_the_wheel():
     assert np.all(np.gcd(N, 210) == 1), "null model must stay on the 210-wheel"
     P = primes_between(10 ** 7, 3 * 10 ** 7)
     assert abs(len(N) / len(P) - 1) < 0.01, "null model density must match primes"
+
+
+def test_curve_point_counts_and_hasse_bound():
+    from ppa.skills.curves import a_p
+    # y^2 = x^3 + x + 1 over F_7 has 4 affine points + infinity = 5, so a_7 = 7 + 1 - 5 = 3
+    assert a_p(1, 1, 7) == 3
+    for p in (101, 1009, 10007):
+        assert abs(a_p(1, 1, p)) <= 2 * p ** 0.5
+    # complex multiplication: y^2 = x^3 - x has a_p = 0 when p = 3 mod 4
+    assert all(a_p(-1, 0, p) == 0 for p in (7, 11, 19, 23, 31, 43))
