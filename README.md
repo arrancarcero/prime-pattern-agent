@@ -109,6 +109,24 @@ the fingerprint, so it is caught three ways.
 | p_minus_1 | p - 1 built from small primes |
 | ecm | some elliptic curve with a smooth size p + 1 - a_p (inside the Hasse range) |
 
+## Example: RSA-PSS signatures (`examples/pss_demo.py`)
+
+RSA-PSS built by hand from RFC 8017 (EMSA-PSS, MGF1 with SHA-256, 32-byte salt) and tested three ways:
+
+1. **Checked by the real library:** every signature is verified by `cryptography` (OpenSSL). The same
+   message gives a different signature each time, and a tampered message is rejected by both.
+2. **Salts through the randomness tuple:** `os.urandom` passes; a reused salt fails (and makes PSS
+   deterministic); Python's Mersenne Twister *passes* but is predictable from its seed. Passing the
+   tuple is necessary, not sufficient.
+3. **Keys through the tool tuple:** a badly generated 1024-bit key (primes close together) is factored
+   by Fermat in one step, and a forged signature is accepted by OpenSSL. A properly generated key
+   survives every tool.
+
+```powershell
+python -m pip install -e ".[crypto]"
+python examples/pss_demo.py
+```
+
 ## Labels
 
 `established`, `conjecture`, `hypothesis`, `speculation`, `retired`, `rediscovery`,
