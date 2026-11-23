@@ -22,6 +22,7 @@ def main(argv=None):
     sub.add_parser("tools", help="fingerprint and calibrate the factoring tool tuple")
     c = sub.add_parser("check", help='fast-check a calculation, e.g.  ppa check "1234*5679=7007886"')
     c.add_argument("expr")
+    sub.add_parser("blindspots", help="where the digital root is blind and how much mod 11 sees")
     a = ap.parse_args(argv)
 
     if a.cmd == "skills":
@@ -53,6 +54,12 @@ def main(argv=None):
         print(f"mod 11:       answer must be {pc.expected_m11}, yours is {pc.got_m11}")
         v = verify_calc(op, x, y, got)
         print(("CORRECT" if v.ok else "WRONG") + "  - " + v.note)
+    elif a.cmd == "blindspots":
+        from ppa.truth.blind_spots import measure, walkthrough
+        walkthrough()
+        print("\nMeasured on random 6-8 digit numbers (20,000 mistakes each):")
+        for name, desc, dr, m in measure():
+            print(f"  {desc:34} digital root {dr:5.1f}%   mod 11 {m:5.1f}%")
     elif a.cmd == "contract":
         p = Path(__file__).resolve().parents[2] / "CONTRACT.md"
         print(p.read_text(encoding="utf-8") if p.exists() else "CONTRACT.md not found")

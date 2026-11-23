@@ -27,6 +27,7 @@ ppa skills                        # list skills and the null model each one must
 ppa contract                      # print the rules every run follows
 ppa tools                         # fingerprint and calibrate the factoring tool tuple
 ppa check "1234*5679=7007886"     # fast digital-root + mod 11 check, then exact
+ppa blindspots                    # where the digital root is blind and what mod 11 sees
 ppa run                           # everything, using agent.toml
 ppa run --intent explore          # only the self-directed exploration loop
 ppa run --intent nature           # only natural measurements
@@ -129,6 +130,20 @@ Measured on 200,000 wrong multiplication answers:
 
 A failed pre-check proves the answer is wrong; a pass only means "probably right".
 Going backwards does not work: 1,000,000 seven-digit numbers share each digital root.
+
+### Blind spots (`ppa blindspots`, `truth/blind_spots.py`)
+
+On the 9-position clock, 9 is a full lap, so 9 and 0 do nothing. That is why a 9 can be
+skipped when taking a digital root, and also why the digital root cannot see a 9 or 0
+added, dropped or traded, or any change in digit order. On the 11-position clock,
+10 = -1, so digit places alternate + and -. That second view sees most of the gap:
+
+| Mistake (all invisible to the digital root) | Mod 11 catches | Why |
+| --- | --- | --- |
+| 0 written as 9, or 9 as 0 | 100% | changes the value by 9 x 10^k = +-9 mod 11, never 0 |
+| Neighbouring digits swapped | 100% | changes it by +-9(a - b), never 0 |
+| A 9 or 0 dropped or added | ~92% | every digit to its left flips sign; misses ~1 in 11 |
+| Any two digits swapped | ~57% | same-sign places (even gap) are invisible to mod 11 too |
 
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 
