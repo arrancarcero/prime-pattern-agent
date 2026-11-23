@@ -1,4 +1,4 @@
-"""Command line:  ppa run [--intent ...] [--max N]   |  ppa skills  |  ppa truth  |  ppa contract
+"""Command line:  ppa run [--intent ...] [--max N]   |  ppa skills  |  ppa truth  |  ppa check "A*B=C"  |  ppa contract
 Without installing:  python -m ppa run --intent explore"""
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ def main(argv=None):
     t.add_argument("--exp", type=int, default=8)
     sub.add_parser("contract", help="print the agent contract")
     sub.add_parser("tools", help="fingerprint and calibrate the factoring tool tuple")
+    c = sub.add_parser("check", help='fast-check a calculation, e.g.  ppa check "1234*5679=7007886"')
+    c.add_argument("expr")
     a = ap.parse_args(argv)
 
     if a.cmd == "skills":
@@ -39,6 +41,18 @@ def main(argv=None):
         print("tool tuple fingerprint", fingerprint())
         for (name, ok, null_ok), t in zip(verify_tools(), TOOL_TUPLE):
             print(f"{name:10} known answer {'PASS' if ok else 'FAIL'}  null prime {'PASS' if null_ok else 'FAIL'}  catches: {t.catches}")
+    elif a.cmd == "check":
+        import re
+        from ppa.truth.truth_tuple import precheck, verify_calc
+        m = re.fullmatch(r"\s*(-?\d+)\s*(\*\*|[-+*])\s*(-?\d+)\s*=\s*(-?\d+)\s*", a.expr)
+        if not m:
+            raise SystemExit("format: A op B = C   with op one of + - * **")
+        x, op, y, got = int(m[1]), m[2], int(m[3]), int(m[4])
+        pc = precheck(op, x, y, got)
+        print(f"digital root: answer must be {pc.expected_dr}, yours is {pc.got_dr}")
+        print(f"mod 11:       answer must be {pc.expected_m11}, yours is {pc.got_m11}")
+        v = verify_calc(op, x, y, got)
+        print(("CORRECT" if v.ok else "WRONG") + "  - " + v.note)
     elif a.cmd == "contract":
         p = Path(__file__).resolve().parents[2] / "CONTRACT.md"
         print(p.read_text(encoding="utf-8") if p.exists() else "CONTRACT.md not found")

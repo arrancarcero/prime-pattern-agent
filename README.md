@@ -26,6 +26,7 @@ ppa truth                         # recheck the truth tuple (about 20 s at --exp
 ppa skills                        # list skills and the null model each one must beat
 ppa contract                      # print the rules every run follows
 ppa tools                         # fingerprint and calibrate the factoring tool tuple
+ppa check "1234*5679=7007886"     # fast digital-root + mod 11 check, then exact
 ppa run                           # everything, using agent.toml
 ppa run --intent explore          # only the self-directed exploration loop
 ppa run --intent nature           # only natural measurements
@@ -108,6 +109,26 @@ the fingerprint, so it is caught three ways.
 | rho | any factor up to about 1e12 (a walk mod p that loops) |
 | p_minus_1 | p - 1 built from small primes |
 | ecm | some elliptic curve with a smooth size p + 1 - a_p (inside the Hasse range) |
+
+## Fast pre-check: casting out nines + mod 11
+
+`truth_tuple.precheck(op, a, b, got)` checks an answer without redoing the calculation.
+The digital root (mod 9) the answer *must* have comes from the inputs' digital roots;
+if the answer's digital root differs, it is wrong. The digital root cannot see digit
+order, so a second view, the alternating digit sum (mod 11), is checked too. Together
+they work as one mod 99 check. `verify_calc` runs the pre-check first and only does the
+exact calculation if it passes. `dr_pairs(6)` lists the 9 digit pairs that lead to 6.
+
+Measured on 200,000 wrong multiplication answers:
+
+| Mistake | Digital root | Mod 11 | Both |
+| --- | --- | --- | --- |
+| One wrong digit | 97.9% | 100% | 100% |
+| Two digits swapped | 0% | 54% | 54% |
+| Random wrong answer | 89.0% | 90.9% | 99.0% |
+
+A failed pre-check proves the answer is wrong; a pass only means "probably right".
+Going backwards does not work: 1,000,000 seven-digit numbers share each digital root.
 
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 

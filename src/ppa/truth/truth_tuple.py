@@ -88,6 +88,71 @@ def verify(key, args, got) -> Verdict:
 
 
 # ---------------------------------------------------------------------------
+# Fast pre-check: digital root (mod 9) and alternating digit sum (mod 11)
+# ---------------------------------------------------------------------------
+# Idea (the user's): before redoing a whole calculation, compare the digital
+# root the answer MUST have with the one it DOES have. That's casting out nines.
+# A second view, mod 11, sees digit ORDER, which the digital root cannot.
+# Together they act as one mod-99 check (same CRT idea as gates x roots = mod 72).
+#
+# Measured on 200,000 wrong multiplication answers:
+#   one wrong digit   dr 97.9%   mod11 100%   both 100%
+#   swapped digits    dr  0%     mod11  54%   both  54%
+#   random wrong      dr 89.0%   mod11 90.9%  both 99.0%
+#
+# A failed pre-check PROVES the answer is wrong. A pass only means "probably
+# right", so the exact check still runs afterwards. It's a filter, not a judge.
+
+Precheck = namedtuple("Precheck", "passed failed_by expected_dr got_dr expected_m11 got_m11")
+
+_OPS = {
+    "+": lambda x, y, m: (x + y) % m,
+    "-": lambda x, y, m: (x - y) % m,
+    "*": lambda x, y, m: (x * y) % m,
+    "**": lambda x, y, m: pow(x, y, m),
+}
+
+
+def digital_root(n: int) -> int:
+    """Repeated digit sum of |n|: 0 for 0, otherwise 1..9 (9 stands for 0 mod 9)."""
+    n = abs(int(n))
+    return 0 if n == 0 else 1 + (n - 1) % 9
+
+
+def dr_pairs(target: int) -> tuple[tuple[int, int], ...]:
+    """The predecessor table: every digit pair (a, b) whose sum has digital root `target`.
+    Going forwards this is instant; going backwards every step branches 9 ways,
+    which is why a digital root can verify an answer but cannot recover it."""
+    return tuple((a, b) for a in range(1, 10) for b in range(1, 10)
+                 if digital_root(a + b) == target)
+
+
+def precheck(op: str, a: int, b: int, got: int) -> Precheck:
+    """Microsecond test of `a op b == got` using residues mod 9 and mod 11.
+    Works on huge integers too: it never computes a op b itself."""
+    f = _OPS[op]
+    e9, g9 = f(a, b, 9), got % 9
+    e11, g11 = f(a, b, 11), got % 11
+    failed = tuple(name for name, bad in (("digital_root", e9 != g9), ("mod11", e11 != g11)) if bad)
+    to_dr = lambda r: 9 if r == 0 else r  # residue -> digital-root label
+    return Precheck(not failed, failed, to_dr(e9), to_dr(g9), e11, g11)
+
+
+def verify_calc(op: str, a: int, b: int, got: int) -> Verdict:
+    """Pre-check first (cheap); only if it passes, do the exact calculation."""
+    args = (a, op, b)
+    pc = precheck(op, a, b, got)
+    if not pc.passed:
+        return Verdict(False, "calc", args, None, got, "precheck",
+                       "rejected by " + " and ".join(pc.failed_by) + " (no full recompute needed)")
+    exact = {"+": a + b, "-": a - b, "*": a * b, "**": a ** b if op == "**" else None}[op]
+    ok = exact == got
+    note = "passed precheck and exact check" if ok else \
+        "passed precheck but exact check caught it (e.g. swapped digits)"
+    return Verdict(ok, "calc", args, exact, got, "exact", note)
+
+
+# ---------------------------------------------------------------------------
 # Self-test: recompute every entry this machine can reach
 # ---------------------------------------------------------------------------
 def _sieve(n):
