@@ -22,6 +22,8 @@ def main(argv=None):
     sub.add_parser("tools", help="fingerprint and calibrate the factoring tool tuple")
     c = sub.add_parser("check", help='fast-check a calculation, e.g.  ppa check "1234*5679=7007886"')
     c.add_argument("expr")
+    tr = sub.add_parser("trail", help="overflow trail: rebuild a number from its running digital roots")
+    tr.add_argument("n", type=int)
     sub.add_parser("blindspots", help="where the digital root is blind and how much mod 11 sees")
     a = ap.parse_args(argv)
 
@@ -54,6 +56,9 @@ def main(argv=None):
         print(f"mod 11:       answer must be {pc.expected_m11}, yours is {pc.got_m11}")
         v = verify_calc(op, x, y, got)
         print(("CORRECT" if v.ok else "WRONG") + "  - " + v.note)
+    elif a.cmd == "trail":
+        from ppa.truth.overflow_trail import show
+        show(a.n)
     elif a.cmd == "blindspots":
         from ppa.truth.blind_spots import measure, walkthrough
         walkthrough()

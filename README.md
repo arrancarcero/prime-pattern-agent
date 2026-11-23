@@ -28,6 +28,7 @@ ppa contract                      # print the rules every run follows
 ppa tools                         # fingerprint and calibrate the factoring tool tuple
 ppa check "1234*5679=7007886"     # fast digital-root + mod 11 check, then exact
 ppa blindspots                    # where the digital root is blind and what mod 11 sees
+ppa trail 3952806                 # overflow trail: rebuild a number from its running roots
 ppa run                           # everything, using agent.toml
 ppa run --intent explore          # only the self-directed exploration loop
 ppa run --intent nature           # only natural measurements
@@ -144,6 +145,27 @@ added, dropped or traded, or any change in digit order. On the 11-position clock
 | Neighbouring digits swapped | 100% | changes it by +-9(a - b), never 0 |
 | A 9 or 0 dropped or added | ~92% | every digit to its left flips sign; misses ~1 in 11 |
 | Any two digits swapped | ~57% | same-sign places (even gap) are invisible to mod 11 too |
+
+### Overflow trail (`ppa trail N`, `truth/overflow_trail.py`)
+
+When adding digits for a digital root, a step that passes 9 (like 14 -> 5) is one lap of
+the 9-clock. Keep the running root and a lap flag at every step, and each digit comes back
+as `d = new_root - old_root + 9 * lap`. Adding 0 never laps but adding 9 always does
+(once the root is at least 1), so the flags remove the 0-vs-9 blind spot.
+For 3952806 (read right to left) the laps are 3, so the digit sum is 6 + 3 x 9 = 33.
+
+How many 7-digit numbers match 3952806 at each level of information:
+
+| What you keep | Numbers that match |
+| --- | --- |
+| Digital root only | 1,000,000 |
+| Root + lap count (= digit sum 33) | 464,653 |
+| Root + where the laps happened | 41,057 |
+| Every running root, no lap flags | 4 (only 0 vs 9 left open) |
+| Full trail (roots + lap flags) | 1 |
+
+The full trail is as long as the number, so it re-encodes the number rather than
+compressing it. The order lives in where the laps happen.
 
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 
