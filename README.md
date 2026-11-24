@@ -37,6 +37,7 @@ ppa run --intent factoring        # the factoring toolbox, calibrated first
 ppa run --intent candles          # redshift + standard-candle test of the zeta zeros
 ppa run --intent spacing          # gaps between zeta zeros vs nuclear energy-level laws
 ppa run --intent walk             # zeros walk home: eta walk vs two-way Riemann-Siegel walk
+ppa run --intent quantum          # simulated quantum computer: Shor on 15, 21, 35, 143 + the memory wall
 ppa run --max 1e10 --steps 60     # bigger range, longer exploration
 python -m pytest                  # 11 tests: core, truth, agent, factoring
 ```
@@ -82,7 +83,8 @@ prime-pattern-agent/
     │   ├── factoring.py     each factoring tool against numbers with different weaknesses
     │   ├── candles.py       zeta zeros as spectral lines (redshift) and standard candles (brightness)
     │   ├── spacing.py       gaps between zeros vs Poisson, GOE (nuclei) and GUE
-    │   └── walk.py          zeros walk home: one-way eta walk vs two-way Riemann-Siegel walk
+    │   ├── walk.py          zeros walk home: one-way eta walk vs two-way Riemann-Siegel walk
+    │   └── quantum.py       state-vector quantum simulator: Shor's algorithm and the 2^n wall
     └── agent/
         ├── planner.py       proposes hypotheses: seed, deepen, combine, refine
         └── loop.py          calibrate -> fixed skills -> explore -> ledger
@@ -228,6 +230,27 @@ prime factors, but the pattern is N long, so it costs ~N steps where trial divis
 ~sqrt(N). Shor's quantum algorithm makes the same move (hide the factors in a period, then
 Fourier transform) on about log N qubits. Its null check uses the prime 1,000,003, which shows
 no dark lines.
+
+## Simulated quantum computer (`ppa run --intent quantum`)
+
+A full state-vector simulator: n qubits = 2^n complex amplitudes. Shor's order finding puts a
+counting register in superposition, multiplies by a^j mod N (a permutation of basis states, so
+unitary), applies the inverse quantum Fourier transform (an FFT along the counting register),
+then measures; continued fractions give the period r and gcd(a^(r/2) +- 1, N) the factors.
+
+| N | Factors | Period | Qubits | State size |
+| --- | --- | --- | --- | --- |
+| 15 | 3 x 5 | 4 | 12 | 64 KB |
+| 21 | 7 x 3 | 6 | 15 | 0.5 MB |
+| 35 | 7 x 5 | 12 | 18 | 4 MB |
+| 143 | 11 x 13 | 60 | 24 | 256 MB |
+
+The memory wall: every qubit doubles the state (x4 per 2 qubits measured), and the full QFT time
+grows about x5 per 2 qubits. 30 qubits fill an RTX 5080's 16 GB; Shor on RSA-2048 (~4,099 qubits)
+would need ~10^1235 bytes. Set `[quantum] gpu = true` in agent.toml and `pip install cupy-cuda12x`
+to run it on an NVIDIA GPU. A 3-way mirror (repetition code) protects bits; quantum error
+correction must do it without copying (no-cloning), which Shor's 9-qubit code (1995) achieves
+with entanglement and parity checks.
 
 ## Walk home (`ppa run --intent walk`)
 

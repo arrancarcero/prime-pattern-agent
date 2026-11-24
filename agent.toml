@@ -23,3 +23,7 @@ seed = 20261121
 
 [output]
 runs_dir = "runs"
+
+[quantum]
+gpu = false          # true: use CuPy on an NVIDIA GPU (pip install cupy-cuda12x)
+max_qubits = 26      # memory-wall test goes up to this many qubits (26 = 0.5 GB; 30 = 8 GB)
