@@ -9,6 +9,8 @@ from ppa.core.ledger import Ledger
 from ppa.core.sieve import primes_between
 from ppa.skills import REGISTRY
 from ppa.skills.base import Context
+from ppa.truth.graveyard import FINGERPRINT as GRAVE_FP
+from ppa.truth.graveyard import Graveyard, hypothesis_key
 
 FIXED = ("dr_gap", "fano", "spectrum", "gates", "randomness", "nature", "curves", "factoring", "candles", "spacing", "walk", "quantum")
 
@@ -51,14 +53,34 @@ def run_agent(cfg: dict, intent: str = "all") -> Ledger:
     if intent in ("all", "explore", "transitions"):
         print("explore")
         planner = Planner(cfg)
-        for _ in range(cfg["planner"]["max_steps"]):
+        gy_cfg = cfg.get("graveyard", {})
+        enforce = gy_cfg.get("enforce", True)
+        graves = Graveyard(cfg["output"]["runs_dir"])
+        max_n = float(cfg["range"]["max_n"])
+        skipped, steps = [], 0
+        while steps < cfg["planner"]["max_steps"]:
             h = planner.next()
             if h is None:
                 break
+            key = hypothesis_key(h.skill, h.params)
+            chk = graves.check(key, max_n=max_n, max_modulus=h.params.get("M"), max_lag=h.params.get("lag"))
+            if enforce and chk.status == "buried":
+                skipped.append({"key": key, "why": chk.reason})
+                continue                       # skipped ideas do not use up a step
+            steps += 1
             f = REGISTRY[h.skill].run(ctx, **h.params)[0]
             f.details["planner_reason"] = h.reason
+            if chk.status == "reopened":
+                f.details["dug_up_from_graveyard"] = chk.reason
             ledger.add(f)
             planner.learn(h, f)
+            if f.survived is False:
+                graves.bury(key, max_n, f.summary)
+        if skipped:
+            ledger.meta["graveyard_skipped"] = skipped
+            print(f"graveyard: skipped {len(skipped)} buried idea(s) (fingerprint {GRAVE_FP}); "
+                  f"first: {skipped[0]['key']} -- {skipped[0]['why'][:90]}")
+            print("  to test them anyway: ppa run --dig   (or raise range.max_n past where they failed)")
 
     counts = Counter(f.label for f in ledger.findings)
     print("summary:", dict(counts))

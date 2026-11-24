@@ -27,6 +27,8 @@ ppa skills                        # list skills and the null model each one must
 ppa contract                      # print the rules every run follows
 ppa tools                         # fingerprint and calibrate the factoring tool tuple
 ppa check "1234*5679=7007886"     # fast digital-root + mod 11 check, then exact
+ppa graveyard                     # ideas already tested and buried (ppa graveyard <key> to check one)
+ppa run --dig                     # ignore the graveyard once and retest buried ideas
 ppa blindspots                    # where the digital root is blind and what mod 11 sees
 ppa trail 3952806                 # overflow trail: rebuild a number from its running roots
 ppa run                           # everything, using agent.toml
@@ -279,6 +281,24 @@ Riemann-Siegel remainder) closes the gap. Its distance from home is |Z(t)|.
 (arrows needed to get as close to home as the two-way walk does). Null: between zeros neither
 walk comes home (one-way at least 1.42 away, two-way at least 0.71). The zero heights agree
 with the spacing skill's zero finder. `examples/walk_home.py` draws both walks.
+
+**Fractal dimension of the walks** (box counting, `core/fractal.py`, calibrated on a line = 0.98
+and the Koch curve = 1.29 vs 1.262): the one-way walk has D = 1.20 at zeros and 1.19 between them,
+against 1.53 for a null walk with the same steps in random directions. Its local dimension holds
+near 1.23 down to 1/1024 of the walk's size, but that comes from the zig-zag of the alternating
+signs: the smoothed (midpoint) spiral slides from 1.32 to 1.03, a smooth curve up close. Being a
+zero decides where the walk ends, not its dimension. `examples/walk_fractal.py` draws it.
+
+## The graveyard (`ppa graveyard`, `truth/graveyard.py`)
+
+A separate layer that remembers what was wrong, so the agent does not test it again.
+Frozen graves (fingerprinted like the truth tuple) hold each buried idea's claim, the test that
+killed it, the numbers, what was tried, and the rule for digging it up: a bigger range, a method
+not yet tried, or new data. Ideas ruled out by proof or counting never reopen. The learned layer,
+`runs/graveyard.json`, records every planner hypothesis that failed, with the range it failed at.
+Before each test the planner asks the graveyard; buried ideas are skipped without using a step.
+Because everything up to mod 72, lag 3 was already explained by gaps at 1e10, `ppa run --intent
+explore` below 1e10 now skips those seeds and says so: use `--dig`, or raise `range.max_n`.
 
 ## Moire and zone-plate tools (in the tool tuple)
 

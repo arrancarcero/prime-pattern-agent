@@ -94,7 +94,10 @@ def run(ctx, N=400_000, **_):
                      for v in rows.values()),
         details={f"{g:.2f}": v for g, v in rows.items()}))
 
-    # 3. Cross-check with the spacing skill's zero finder
+    # 3. Fractal dimension of the walk paths (the spiral picture)
+    out.append(fractal_finding())
+
+    # 4. Cross-check with the spacing skill's zero finder
     found = zeros_up_to(max(ZEROS) + 1)
     err = max(abs(a - b) for a, b in zip(found, ZEROS))
     out.append(Finding(
@@ -103,6 +106,42 @@ def run(ctx, N=400_000, **_):
         f"largest height difference {err:.1e}",
         survived=len(found) == len(ZEROS) and err < 0.01))
     return out
+
+
+def fractal_finding(N=20_000, seed=0):
+    """Box-counting dimension of the one-way walk at zeros, between zeros, and of a null
+    walk with the same step lengths 1/sqrt(n) but random directions. Calibrated first on
+    a straight line (D = 1) and the Koch curve (D = 1.262)."""
+    from ppa.core.fractal import box_dimension, koch_curve, local_slopes
+    line = box_dimension(np.array([0, 1 + 0.3j]))
+    koch = box_dimension(koch_curve(8))
+    calibrated = abs(line - 1) < 0.05 and abs(koch - math.log(4) / math.log(3)) < 0.05
+    rng = np.random.default_rng(seed)
+    n = np.arange(1, N + 1, dtype=np.float64)
+    path = lambda steps: np.concatenate([[0], np.cumsum(steps)])
+    mids = [(a + b) / 2 for a, b in zip(ZEROS, ZEROS[1:])]
+    d_zero = [box_dimension(path(np.diff(np.concatenate([[0], eta_stops(g, N)])))) for g in ZEROS]
+    d_mid = [box_dimension(path(np.diff(np.concatenate([[0], eta_stops(t, N)])))) for t in mids]
+    d_null = [box_dimension(path(n ** -0.5 * np.exp(2j * np.pi * rng.random(N)))) for _ in range(10)]
+    m = lambda v: (float(np.mean(v)), float(np.std(v)))
+    (z, zs), (b, bs), (u, us) = m(d_zero), m(d_mid), m(d_null)
+    raw = np.concatenate([[0], eta_stops(ZEROS[0], 200_000)])
+    slopes = local_slopes(raw, lo=1 / 1024, hi=1 / 4, k=9)
+    smooth = local_slopes(eta_averaged(raw), lo=1 / 1024, hi=1 / 4, k=9)
+    structured = u - z > 5 * max(zs, us)
+    same_shape = abs(z - b) < 2 * max(zs, bs) + 0.02
+    return Finding(
+        "walk", "fractal dimension of the walk spirals", "established",
+        f"calibration: line {line:.2f} (1), Koch {koch:.3f} (1.262). One-way walk ({N:,} arrows): "
+        f"at zeros D = {z:.3f} +- {zs:.3f}, between zeros D = {b:.3f} +- {bs:.3f}; null (same steps, "
+        f"random directions) D = {u:.3f} +- {us:.3f}. Local slopes at the first zero, large to small "
+        f"scales: zig-zag walk {slopes}; smoothed (midpoint) spiral {smooth}. The walks are more ordered "
+        f"than chance; the steady ~1.2 comes from the zig-zag of the alternating signs, while the "
+        f"spiral itself flattens toward D = 1 (a smooth curve) up close. Being a zero changes where "
+        f"the walk ends, not its dimension",
+        survived=(structured and same_shape) if calibrated else None,
+        details={"D_zero": round(z, 4), "D_between": round(b, 4), "D_null": round(u, 4),
+                 "koch": round(koch, 4), "local_slopes": slopes, "smoothed_local_slopes": smooth})
 
 
 SKILL = Skill("walk", "between zeros the walks do not end at the origin",

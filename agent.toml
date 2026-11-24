@@ -17,6 +17,10 @@ start_lags = [1]
 max_modulus = 72
 max_lag = 3
 
+[graveyard]
+enforce = true         # skip ideas already buried (truth/graveyard.py + runs/graveyard.json);
+                       # override once with:  ppa run --dig
+
 [null_model]
 wheel = 210            # random-prime model keeps the wheel of 2*3*5*7
 seed = 20261121

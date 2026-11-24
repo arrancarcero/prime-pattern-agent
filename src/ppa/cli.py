@@ -15,6 +15,7 @@ def main(argv=None):
     r.add_argument("--max", type=float, help="override range.max_n")
     r.add_argument("--config", default="agent.toml")
     r.add_argument("--steps", type=int, help="override planner.max_steps")
+    r.add_argument("--dig", action="store_true", help="ignore the graveyard: retest buried ideas")
     sub.add_parser("skills", help="list skills and their null models")
     t = sub.add_parser("truth", help="self-test the truth tuple")
     t.add_argument("--exp", type=int, default=8)
@@ -24,6 +25,8 @@ def main(argv=None):
     c.add_argument("expr")
     tr = sub.add_parser("trail", help="overflow trail: rebuild a number from its running digital roots")
     tr.add_argument("n", type=int)
+    gy = sub.add_parser("graveyard", help="list buried ideas, or check one: ppa graveyard [key]")
+    gy.add_argument("key", nargs="?")
     sub.add_parser("blindspots", help="where the digital root is blind and how much mod 11 sees")
     a = ap.parse_args(argv)
 
@@ -62,6 +65,21 @@ def main(argv=None):
     elif a.cmd == "trail":
         from ppa.truth.overflow_trail import show
         show(a.n)
+    elif a.cmd == "graveyard":
+        from ppa.truth.graveyard import FINGERPRINT, GRAVEYARD, Graveyard
+        gy = Graveyard("runs")
+        if a.key:
+            c = gy.check(a.key)
+            print(f"{c.status.upper()}: {c.key}\n  {c.reason or 'no grave for this idea'}")
+        else:
+            print(f"graveyard fingerprint {FINGERPRINT}: {len(GRAVEYARD)} frozen graves, "
+                  f"{len(gy.learned)} learned in runs/graveyard.json")
+            for g in GRAVEYARD:
+                reopen = ", ".join(f"{k} {v}" for k, v in g.reopen_if.items()) or "never (proof or counting)"
+                print(f"\n[{g.key}]\n  claim:    {g.claim}\n  killed by: {g.killed_by}\n"
+                      f"  evidence: {g.evidence}\n  reopen if: {reopen}")
+            for e in gy.learned:
+                print(f"\n[learned] {e['key']} at max_n {e['max_n']:g} ({e['buried']}): {e['summary'][:120]}")
     elif a.cmd == "blindspots":
         from ppa.truth.blind_spots import measure, walkthrough
         walkthrough()
@@ -79,6 +97,8 @@ def main(argv=None):
             cfg["range"]["max_n"] = int(a.max)
         if a.steps:
             cfg["planner"]["max_steps"] = a.steps
+        if a.dig:
+            cfg.setdefault("graveyard", {})["enforce"] = False
         run_agent(cfg, a.intent)
 
 

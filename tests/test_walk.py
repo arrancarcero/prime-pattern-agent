@@ -3,10 +3,11 @@ from ppa.skills.walk import SKILL, eta_averaged, eta_stops, two_way
 
 
 def test_walks():
-    home, arrows, cross = SKILL.run(Context({}, (0, 0), (0, 0), None, None), N=100_000)
+    home, arrows, fractal, cross = SKILL.run(Context({}, (0, 0), (0, 0), None, None), N=100_000)
     assert home.survived, home.summary
     assert arrows.survived, arrows.summary
     assert cross.survived, cross.summary
+    assert fractal.survived, fractal.summary
 
 
 def test_mirror_walk_lands_on_real_line():
