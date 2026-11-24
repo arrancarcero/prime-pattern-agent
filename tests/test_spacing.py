@@ -9,9 +9,10 @@ def test_first_zero_and_sign_change():
 
 
 def test_spacing_prefers_gue():
-    cal, law = SKILL.run(Context({}, (0, 0), (0, 0), None, None), T=2000)
+    cal, law, high = SKILL.run(Context({}, (0, 0), (0, 0), None, None), T=2000)
     assert cal.survived, cal.summary
     assert law.survived and law.details["ks"]["GUE"] < law.details["ks"]["GOE"], law.summary
+    assert high.survived, high.summary                     # FFT batch walk near 1e8
 
 
 def test_batch_walk_matches_direct():
