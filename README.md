@@ -181,6 +181,11 @@ Measured, primes to 10^8: 10 lines within 0.005 of the known zero heights; impli
 0.497 to 0.505 for all 10. Calibration: a fake zero planted at beta = 0.6, gamma = 35 is read
 back as 0.601. This cannot prove RH: an off-line zero far higher up would stay invisible.
 
+Noise check: white noise is added at 0.5x to 20x the signal's own spread. The brightest zero
+(14.13) still reads beta = 0.5 vs 0.6 apart at 5x; dim zeros (near 50) hold to about 1x.
+Static spreads over every frequency, but a zero sits at one, so averaging cancels the static.
+Random Cramer-model primes (no zeros) show no lines at all, only a louder hum everywhere.
+
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 
 RSA-PSS built by hand from RFC 8017 (EMSA-PSS, MGF1 with SHA-256, 32-byte salt) and tested three ways:

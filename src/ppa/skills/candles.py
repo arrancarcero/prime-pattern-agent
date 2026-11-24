@@ -109,7 +109,42 @@ def run(ctx, max_x=None, tol=0.03, **_):
         survived=(drift < tol) if calibrated else None,
         details={f"{g:.2f}": {"near": round(a, 4), "far": round(b, 4), "beta": round(be, 4)}
                  for g, (a, b, be) in rows.items()}))
+
+    # 4. Noise tolerance: how much random static can each candle survive?
+    out.append(noise_tolerance(f, u, rows, calibrated))
     return out
+
+
+NOISE_LEVELS = (0.5, 1, 2, 5, 10, 20)   # multiples of the signal's own spread
+
+
+def noise_tolerance(f, u, rows, calibrated, seeds=8, sep=0.1):
+    """For each zero: the loudest added white noise at which its reading still tells
+    beta = 0.5 from beta = 0.6 (spread of implied beta below sep/4, so the two are
+    about 4 standard deviations apart). Static spreads over every frequency while
+    a zero's wave sits at one, so averaging over the whole curve cancels most of it.
+    Dim zeros (brightness ~ 1/gamma) are drowned first, like faint stars in city light."""
+    sd = float(f.std())
+    survive = {}
+    for g in ZEROS:
+        best = 0.0
+        for m in NOISE_LEVELS:
+            bs = [candle(f + np.random.default_rng(k).normal(0, m * sd, len(u)), u, g)[2]
+                  for k in range(seeds)]
+            if np.std(bs) < sep / 4 and abs(np.mean(bs) - 0.5) < sep / 2:
+                best = m
+            else:
+                break
+        survive[g] = best
+    first, last = survive[ZEROS[0]], survive[ZEROS[-1]]
+    ok = calibrated and first >= 1
+    return Finding(
+        "candles", "noise tolerance: static each candle survives", "established",
+        f"brightest zero ({ZEROS[0]:.2f}) stays readable up to {first:g}x the signal's spread "
+        f"in added noise; dimmest tested ({ZEROS[-1]:.2f}) up to {last:g}x",
+        survived=ok,
+        details={f"{g:.2f}": {"survives_noise_x": m, "brightness": round(rows[g][1], 4)}
+                 for g, m in survive.items()})
 
 
 SKILL = Skill("candles", "every zero has real part 1/2: brightness far/near = 1 after dividing by sqrt(x)",
