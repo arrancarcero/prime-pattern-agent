@@ -150,6 +150,118 @@ def sign_fft(N, budget):
     return None, N
 
 
+def _sqrt_mod(n, p):
+    """Tonelli-Shanks: r with r^2 = n mod p (p an odd prime, n a square mod p)."""
+    n %= p
+    if p == 2 or n == 0:
+        return n
+    q, s = p - 1, 0
+    while q % 2 == 0:
+        q //= 2
+        s += 1
+    z = 2
+    while pow(z, (p - 1) // 2, p) != p - 1:
+        z += 1
+    m, c, t, r = s, pow(z, q, p), pow(n, q, p), pow(n, (q + 1) // 2, p)
+    while t != 1:
+        i, t2 = 0, t
+        while t2 != 1:
+            t2 = t2 * t2 % p
+            i += 1
+        b = pow(c, 1 << (m - i - 1), p)
+        m, c, t, r = i, b * b % p, t * b * b % p, r * b % p
+    return r
+
+
+def quadratic_sieve(N, budget):
+    """Dust settling near the ground, then triangulation.
+    Values Q(x) = x^2 - N for x just above sqrt(N) are small, so many break completely into
+    small primes (the factor base): the dust settles close to the ground. Each such 'smooth'
+    value is one observer's partial clue. Combine clues whose prime exponents are all even
+    (linear algebra over GF(2)) and the product is a square on both sides:
+        X^2 = Y^2 (mod N)   ->   gcd(X - Y, N) is a factor about half the time.
+    The flag it reads (smoothness near sqrt N) exists for every N; good key choices cannot
+    remove it. budget = half-width of the sieve interval. Steps returned = numbers sieved."""
+    import numpy as np
+    if N % 2 == 0:
+        return 2, 1
+    r = math.isqrt(N)
+    if r * r == N:
+        return r, 1
+    lnN = math.log(N)
+    B = int(max(50, math.exp(0.5 * math.sqrt(lnN * math.log(lnN)))))
+    fb = [p for p in PRIMES if p <= B and (p == 2 or pow(N % p, (p - 1) // 2, p) == 1)]
+    for p in fb:
+        if N % p == 0 and p != N:
+            return p, 1
+    need = len(fb) + 12
+    rels_x, rels_e, rels_q = [], [], []
+    logs = np.array([math.log(p) for p in fb])
+    block = 1 << 16
+    start, sieved = r + 1, 0
+    while len(rels_x) < need and sieved < 2 * budget:
+        xs = np.arange(start, start + block, dtype=object)
+        S = np.zeros(block)
+        for p, lp in zip(fb, logs):
+            if p == 2:
+                S[(start + np.arange(block)) % 2 == (1 if N % 2 else 0)] += lp
+                continue
+            t = _sqrt_mod(N, p)
+            for root in {t, p - t}:
+                first = (root - start) % p
+                S[first::p] += lp
+        target = np.log(np.abs(np.array([int(x) * int(x) - N for x in (start, start + block - 1)],
+                                        dtype=float))).mean() - 2.2 * math.log(B)
+        for i in np.nonzero(S > target)[0]:
+            x = start + int(i)
+            q = x * x - N
+            e = []
+            for p in fb:
+                k = 0
+                while q % p == 0:
+                    q //= p
+                    k += 1
+                e.append(k)
+            if q == 1:
+                rels_x.append(x)
+                rels_e.append(e)
+                rels_q.append(x * x - N)
+        start += block
+        sieved += block
+    if len(rels_x) < len(fb) + 1:
+        return None, sieved
+    # Gaussian elimination over GF(2): rows are relations, bits are primes (exponent parity)
+    rows = [sum(1 << j for j, k in enumerate(e) if k & 1) for e in rels_e]
+    hist = [1 << i for i in range(len(rows))]
+    pivots = {}
+    for i in range(len(rows)):
+        v, h = rows[i], hist[i]
+        while v:
+            b = v.bit_length() - 1
+            if b in pivots:
+                pv, ph = pivots[b]
+                v ^= pv
+                h ^= ph
+            else:
+                pivots[b] = (v, h)
+                break
+        if v:
+            continue
+        idx = [j for j in range(len(rows)) if h >> j & 1]
+        X = 1
+        tot = [0] * len(fb)
+        for j in idx:
+            X = X * rels_x[j] % N
+            tot = [a + b for a, b in zip(tot, rels_e[j])]
+        Y = 1
+        for p, k in zip(fb, tot):
+            Y = Y * pow(p, k // 2, N) % N
+        g = math.gcd(X - Y, N)
+        if 1 < g < N:
+            return g, sieved
+    return None, sieved
+
+
 def rho(N, budget, seed=1):
     if N % 2 == 0:
         return 2, 1

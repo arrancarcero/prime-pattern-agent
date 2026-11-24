@@ -33,3 +33,12 @@ def test_sign_fft_dark_lines():
     assert mag[7] < 1e-9 and mag[11] < 1e-9                # dark at the factors
     assert sign_fft(1009 * 1013, 2_000_000)[0] == 1009
     assert sign_fft(1_000_003, 2_000_000)[0] is None       # a prime has no dark lines
+
+
+def test_quadratic_sieve_reaches_past_rho():
+    from ppa.core.factoring import _sqrt_mod, quadratic_sieve
+    assert _sqrt_mod(10, 13) ** 2 % 13 == 10
+    p, q = 759329574457, 1000000000039                  # 40-bit factors, 24-digit N
+    f, _ = quadratic_sieve(p * q, 5_000_000)
+    assert f in (p, q)
+    assert quadratic_sieve(1_000_000_000_000_037, 100_000)[0] is None   # a prime: no factor

@@ -8,7 +8,7 @@ import hashlib
 import inspect
 from collections import namedtuple
 
-from ppa.core.factoring import ecm, fermat, moire, p_minus_1, rho, sign_fft, trial, zone_plate
+from ppa.core.factoring import ecm, fermat, moire, p_minus_1, quadratic_sieve, rho, sign_fft, trial, zone_plate
 
 Tool = namedtuple("Tool", "name fn catches budget")
 
@@ -21,6 +21,7 @@ TOOL_TUPLE: tuple = (
     Tool("moire",     moire,     "small beat gap q - p (Fermat in costume)",   20_000),
     Tool("zone_plate", zone_plate, "a small factor, seen as aliasing (trial in costume)", 20_000),
     Tool("sign_fft",  sign_fft,  "any factor of N up to ~2e6 (dark FFT lines); costs N", 2_000_000),
+    Tool("quadratic_sieve", quadratic_sieve, "balanced factors of N up to ~30 digits (smooth dust near sqrt N)", 5_000_000),
 )
 
 CALIBRATION: tuple = (
@@ -32,6 +33,7 @@ CALIBRATION: tuple = (
     ("moire",     10007 * 10009,        10007),
     ("zone_plate", 1009 * 1000000000039, 1009),
     ("sign_fft",  1009 * 1013,          1009),
+    ("quadratic_sieve", 1000003 * 1000033, None),
 )
 
 # A new tool that claims to be an old method in disguise must give the same answers.

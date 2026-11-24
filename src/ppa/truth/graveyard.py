@@ -106,6 +106,29 @@ GRAVEYARD: tuple[Grave, ...] = (
           "reasoning (Logjam, Adrian et al. 2015)",
           "precomputation pays only for shared parameters; every RSA key has its own N",
           {}, NEVER),
+    Grave("factoring:flat_course_shortcut",
+          "some physical or mathematical trick finds the hole on a flat golf course (one marked spot, "
+          "no slope) faster than covering it",
+          "nine attempts, 2026-11-23, each measured or proven",
+          "memory: 2^n state (30 qubits = 16 GB); time: 897 MB -> 1 MB but 7.6 h for N = 143; "
+          "split across the mirror: threads = period r; adiabatic/Zeno: gap 1/sqrt(N) at s = 0.5 for "
+          "every hole, tuned time sqrt(N); echoes (bats): identical resonances wherever the hole is, "
+          "Grover needs ~sqrt(N) pings (804 for 2^20); many observers: sqrt(k) speedup only (Zalka 1999); "
+          "liquid / DNA: one molecule per spot (Adleman, Hartmanis); height: each high reading costs "
+          "the ground it covers; heavy gas: random walk ~N, quantum walk ~sqrt(N) (Childs-Goldstone 2004). "
+          "Ceiling sqrt(N) proven (Bennett, Bernstein, Brassard, Vazirani 1997). Test for any new idea: "
+          "does it make the ground tilt, or only cover faster?",
+          {"method": ("memory", "time", "mirror split", "adiabatic/Zeno", "echolocation", "observers",
+                      "liquid/DNA", "height", "heavy gas", "walk home (Gauss-sum fold)")},
+          {"method_not_in": ("memory", "time", "mirror split", "adiabatic/Zeno", "echolocation", "observers",
+                             "liquid/DNA", "height", "heavy gas", "walk home (Gauss-sum fold)")}),
+    Grave("factoring:walk_home_points_to_factor",
+          "the walk back from infinity points to a factor the way it finds zeta zeros",
+          "Gauss-sum walk e^(2 pi i a n^2 / N), N = 77",
+          "the endpoint is sqrt(N) for every a coprime to N and sqrt(N gcd(a, N)) only on the factors "
+          "(7 -> 23.22, 11 -> 29.10); reciprocity folds each walk to ~log N steps, but it is a fast "
+          "ping, not a compass: zeta zeros are global, a factor is a local secret",
+          {}, NEVER),
     Grave("randomness:tuple_means_secure",
           "a generator that passes the randomness tuple is safe for keys and salts",
           "examples/pss_demo.py",

@@ -222,6 +222,22 @@ and the even/odd (Oddo-Harkins) effect, odd elements with a prime number of prot
 common (p = 0.04), but that is driven by nitrogen (next to spallation-depleted boron) and fluorine.
 Without Z < 11, p = 0.16; beyond the iron peak, p = 0.62. No prime signal in abundances.
 
+## Quadratic sieve (`quadratic_sieve` in the tool tuple)
+
+Dust settles near the ground: Q(x) = x^2 - N for x just above sqrt(N) is small, so many values
+break completely into small primes (the factor base). Each smooth value is one observer's partial
+clue; combining clues whose prime exponents are all even (linear algebra over GF(2)) gives
+X^2 = Y^2 (mod N), and gcd(X - Y, N) is a factor. This flag (smoothness near sqrt N) exists for
+every N; good key choices cannot remove it, which is why the sieves (and the number field sieve
+that factored RSA-250) work on any key. Measured, balanced factors: 40-bit in 0.2 s, 50-bit
+(30-digit N) in 0.8 s, where rho needs ~30 s; this simple one-sided version runs out of clues
+at 60-bit factors. Its null prime (10^12 + 37) gives no factor.
+
+The flat-course grave (`ppa graveyard factoring:flat_course_shortcut`) records nine other
+attempts to find one hole on flat ground faster than covering it, each with its numbers; the
+sqrt(N) ceiling is proven. The test for a new idea: does it make the ground tilt, or only
+cover faster?
+
 ## Sign flips + FFT (`sign_fft` in the tool tuple)
 
 The Jacobi sign pattern (a / N), a = 0..N-1, is computed by reciprocity flips without knowing the
