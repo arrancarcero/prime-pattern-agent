@@ -210,6 +210,21 @@ and the even/odd (Oddo-Harkins) effect, odd elements with a prime number of prot
 common (p = 0.04), but that is driven by nitrogen (next to spallation-depleted boron) and fluorine.
 Without Z < 11, p = 0.16; beyond the iron peak, p = 0.62. No prime signal in abundances.
 
+## Moire and zone-plate tools (in the tool tuple)
+
+**moire:** grids spaced p and q beat every N/(q - p). Measure the beat gap d and
+p = (sqrt(d^2 + 4N) - d)/2. Scanning d = 0, 2, 4, ... is Fermat's method in costume
+(N = a^2 - b^2 with b = d/2). Inverting the grids (dark <-> light) leaves the beat unchanged.
+
+**zone_plate:** the lens pattern cos(pi x^2 / N) repeats every N. Sampled every s-th point it
+repeats every N / gcd(s^2, N), so a stride sharing a factor with N collapses into a shorter
+cycle (aliasing). Trying strides 2, 3, 5, ... is trial division seen through a lens.
+
+Because each claims to be an old method in disguise, `ppa tools` also runs a **twin check**:
+on 200 test numbers, moire must agree with Fermat and zone_plate with trial division
+(both 200/200). `examples/moire_zone_plates.py` draws the beat, the inverted beat, two zone
+plates making straight fringes, and the aliasing.
+
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 
 RSA-PSS built by hand from RFC 8017 (EMSA-PSS, MGF1 with SHA-256, 32-byte salt) and tested three ways:

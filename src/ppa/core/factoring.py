@@ -64,6 +64,41 @@ def fermat(N, budget):
     return None, budget
 
 
+def moire(N, budget):
+    """Moire beat. Grids with spacings p and q beat at frequency 1/p - 1/q = (q - p)/N,
+    so the beat period is N / d with d = q - p. Knowing d and p*q = N:
+        p = (sqrt(d^2 + 4N) - d) / 2
+    Scan the beat gap d = 0, 2, 4, ... (p, q odd, so d is even) until d^2 + 4N is a
+    perfect square. This is Fermat's method in another costume: N = a^2 - b^2 with b = d/2.
+    Inverting the grids (dark <-> light) changes only the average brightness, not the
+    beat, so the inverted moire gives the same d."""
+    if N % 2 == 0:
+        return 2, 1
+    for i in range(budget):
+        d = 2 * i
+        s2 = d * d + 4 * N
+        s = math.isqrt(s2)
+        if s * s == s2:
+            p = (s - d) // 2
+            if 1 < p < N:
+                return p, i + 1
+    return None, budget
+
+
+def zone_plate(N, budget):
+    """Zone plate (Fresnel lens): brightness cos(pi x^2 / N), rings getting finer outward.
+    It repeats with period N. Sample it only every s-th point: the samples follow
+    cos(pi s^2 m^2 / N), which repeats after N / gcd(s^2, N) samples. If s shares a
+    factor with N, the sampled plate collapses into a smaller plate (fewer rings per
+    cycle): the factor shows up as aliasing. Trying strides s = 2, 3, 5, 7, ... is trial
+    division seen through a lens, so it catches exactly what trial division catches."""
+    for i, s in enumerate(PRIMES[:budget]):
+        period = N // math.gcd(s * s, N)        # length of one cycle of the sampled plate
+        if period < N and s != N:
+            return math.gcd(s, N), i + 1
+    return None, budget
+
+
 def rho(N, budget, seed=1):
     if N % 2 == 0:
         return 2, 1

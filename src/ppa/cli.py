@@ -44,6 +44,9 @@ def main(argv=None):
         print("tool tuple fingerprint", fingerprint())
         for (name, ok, null_ok), t in zip(verify_tools(), TOOL_TUPLE):
             print(f"{name:10} known answer {'PASS' if ok else 'FAIL'}  null prime {'PASS' if null_ok else 'FAIL'}  catches: {t.catches}")
+        from ppa.truth.tool_tuple import verify_twins
+        for new, old, agree, n in verify_twins():
+            print(f"twin check: {new} vs {old}: same answer on {agree}/{n} numbers")
     elif a.cmd == "check":
         import re
         from ppa.truth.truth_tuple import precheck, verify_calc
