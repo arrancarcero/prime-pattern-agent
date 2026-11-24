@@ -248,7 +248,15 @@ then measures; continued fractions give the period r and gcd(a^(r/2) +- 1, N) th
 The memory wall: every qubit doubles the state (x4 per 2 qubits measured), and the full QFT time
 grows about x5 per 2 qubits. 30 qubits fill an RTX 5080's 16 GB; Shor on RSA-2048 (~4,099 qubits)
 would need ~10^1235 bytes. Set `[quantum] gpu = true` in agent.toml and `pip install cupy-cuda12x`
-to run it on an NVIDIA GPU. A 3-way mirror (repetition code) protects bits; quantum error
+to run it on an NVIDIA GPU.
+
+**Threads across the mirror.** Splitting the qubits (circuit cutting, tensor networks) and
+describing each side by a gradient works when few "threads" (entanglement, Schmidt rank)
+cross the cut. Each thread after the QFT is a linear phase gradient across the spikes (for 15:
+0, 1/4, 1/2, 3/4 turns, and its mirror 0, 3/4, 1/2, 1/4). Measured across the cut between the
+counting and work registers, the thread count is exactly the period r (15: 4, 21: 6, 35: 12,
+143: 60); a cut through the middle of the counting register is worse (143: 228). For RSA-2048
+r is ~2^2048, so the split costs as much as the full state. A 3-way mirror (repetition code) protects bits; quantum error
 correction must do it without copying (no-cloning), which Shor's 9-qubit code (1995) achieves
 with entanglement and parity checks.
 

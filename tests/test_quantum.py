@@ -13,5 +13,6 @@ def test_shor_small():
 
 
 def test_quantum_skill():
-    cal, sh, wall = SKILL.run(Context({}, (0, 0), (0, 0), None, None), numbers=(15, 21), max_qubits=20)
-    assert cal.survived and sh.survived and wall.survived
+    cal, sh, threads, wall = SKILL.run(Context({}, (0, 0), (0, 0), None, None), numbers=(15, 21), max_qubits=20)
+    assert cal.survived and sh.survived and threads.survived and wall.survived
+    assert [c['mirror_threads'] for c in threads.details['cuts']] == [4, 6]

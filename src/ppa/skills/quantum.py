@@ -88,6 +88,36 @@ def shor(N: int, xp=np, seed: int = 1, max_shots: int = 40):
     return {"N": N, "factors": None, "qubits": None}
 
 
+def threads_across(N: int, a: int):
+    """Entanglement across two cuts of Shor's state (after the multiplication step):
+    the 'mirror' between counting and work registers, and a cut through the middle of
+    the counting register after the QFT. Threads = Schmidt rank (non-zero singular values).
+    A classical splitter (circuit cutting, tensor networks) pays for every thread.
+    Across the mirror the count is exactly the period r: to fill in one side from the
+    other you would already need the answer."""
+    L = max(1, (N - 1).bit_length())
+    t = 2 * L
+    while (1 << t) < N * N:
+        t += 1
+    Q, W = 1 << t, 1 << L
+    st = np.zeros((Q, W))
+    j = np.arange(Q)
+    st[j, [pow(a, int(x), N) for x in j]] = 1 / math.sqrt(Q)
+
+    def rank_entropy(M):
+        sv = np.linalg.svd(M, compute_uv=False)
+        p = sv ** 2
+        p = p[p > 1e-9]
+        return int(len(p)), float(-(p * np.log2(p)).sum())
+
+    mirror, ent = rank_entropy(st)
+    after = np.fft.fft(st, axis=0) / math.sqrt(Q)
+    mid, _ = rank_entropy(after.reshape(1 << (t // 2), -1))
+    r = next(k for k in range(1, N) if pow(a, k, N) == 1)
+    return {"N": N, "r": r, "qubits": t + L, "mirror_threads": mirror,
+            "entanglement_bits": round(ent, 3), "mid_counting_threads": mid}
+
+
 def memory_wall(xp, sizes, dtype=np.complex64):
     """Allocate a 2^n state and apply a QFT to all n qubits; time it for each n."""
     rows = []
@@ -131,6 +161,16 @@ def run(ctx, numbers=(15, 21, 35, 143), max_qubits=None, **_):
                   f"{r['qubits']} qubits, {r['state_bytes'] / 2**20:.3g} MB, {r['shots']} shot(s))"
                   for r in rows if r["factors"]),
         survived=ok and bool(rows), details={"runs": rows, "backend": where}))
+
+    # Threads across the mirror: what a split-and-stitch simulator would pay
+    th = [threads_across(r["N"], r["a"]) for r in rows if r["factors"]]
+    out.append(Finding(
+        "quantum", "threads across the mirror: entanglement = period r", "established",
+        "; ".join(f"{x['N']}: {x['mirror_threads']} threads (r = {x['r']}), mid-register cut "
+                  f"{x['mid_counting_threads']}" for x in th)
+        + ". Splitting the qubits costs one stored piece per thread, and across the mirror that "
+          "is the period itself (~2^2048 for RSA-2048)",
+        survived=bool(th) and all(x["mirror_threads"] == x["r"] for x in th), details={"cuts": th}))
 
     # The memory wall: each qubit doubles the state
     sizes = list(range(14, max_qubits + 1, 2))
