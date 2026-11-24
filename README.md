@@ -35,6 +35,7 @@ ppa run --intent nature           # only natural measurements
 ppa run --intent curves           # Hasse-Weil bound and Sato-Tate angles on elliptic curves
 ppa run --intent factoring        # the factoring toolbox, calibrated first
 ppa run --intent candles          # redshift + standard-candle test of the zeta zeros
+ppa run --intent spacing          # gaps between zeta zeros vs nuclear energy-level laws
 ppa run --max 1e10 --steps 60     # bigger range, longer exploration
 python -m pytest                  # 11 tests: core, truth, agent, factoring
 ```
@@ -78,7 +79,8 @@ prime-pattern-agent/
     │   ├── nature.py        natural measurements: known periods + randomness tuple
     │   ├── curves.py        elliptic curves: |a_p| <= 2 sqrt(p) and Sato-Tate angles
     │   ├── factoring.py     each factoring tool against numbers with different weaknesses
-    │   └── candles.py       zeta zeros as spectral lines (redshift) and standard candles (brightness)
+    │   ├── candles.py       zeta zeros as spectral lines (redshift) and standard candles (brightness)
+    │   └── spacing.py       gaps between zeros vs Poisson, GOE (nuclei) and GUE
     └── agent/
         ├── planner.py       proposes hypotheses: seed, deepen, combine, refine
         └── loop.py          calibrate -> fixed skills -> explore -> ledger
@@ -185,6 +187,28 @@ Noise check: white noise is added at 0.5x to 20x the signal's own spread. The br
 (14.13) still reads beta = 0.5 vs 0.6 apart at 5x; dim zeros (near 50) hold to about 1x.
 Static spreads over every frequency, but a zero sits at one, so averaging cancels the static.
 Random Cramer-model primes (no zeros) show no lines at all, only a louder hum everywhere.
+
+## Zero spacing (`ppa run --intent spacing`)
+
+Montgomery (1972) found zeta zeros repel; Dyson recognized random-matrix statistics, the model
+for energy levels of heavy nuclei. The skill finds zeros from sign changes of Hardy's Z(t)
+(Riemann-Siegel formula), checks the count against Riemann-von Mangoldt, and compares the
+gaps with three laws: Poisson (no repulsion), GOE (nuclei, repulsion ~ s) and GUE (~ s^2).
+
+| Zeros up to height | Gaps | KS: Poisson | KS: GOE | KS: GUE |
+| --- | --- | --- | --- | --- |
+| 1,000 | 648 | 0.326 | 0.113 | 0.045 |
+| 3,000 | 2,468 | 0.315 | 0.108 | 0.040 |
+| 10,000 | 10,141 | 0.307 | 0.095 | 0.027 |
+
+GUE wins at every height, and its distance shrinks as the zeros get higher (the small gap that
+remains is a known low-height effect). Zeros repel more strongly than nuclear levels, which is
+why a Hilbert-Polya system behind them would have to break time-reversal symmetry.
+
+A side check of element abundances (Lodders 2010, solar system): after removing the steep trend
+and the even/odd (Oddo-Harkins) effect, odd elements with a prime number of protons look ~5x more
+common (p = 0.04), but that is driven by nitrogen (next to spallation-depleted boron) and fluorine.
+Without Z < 11, p = 0.16; beyond the iron peak, p = 0.62. No prime signal in abundances.
 
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 

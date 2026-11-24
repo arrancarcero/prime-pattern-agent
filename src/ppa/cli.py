@@ -11,7 +11,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run the agent")
     r.add_argument("--intent", default="all",
-                   help="all | explore | dr_gap | fano | spectrum | gates | randomness | nature | curves | factoring | candles")
+                   help="all | explore | dr_gap | fano | spectrum | gates | randomness | nature | curves | factoring | candles | spacing")
     r.add_argument("--max", type=float, help="override range.max_n")
     r.add_argument("--config", default="agent.toml")
     r.add_argument("--steps", type=int, help="override planner.max_steps")
