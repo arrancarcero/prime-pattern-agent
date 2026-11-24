@@ -36,6 +36,7 @@ ppa run --intent curves           # Hasse-Weil bound and Sato-Tate angles on ell
 ppa run --intent factoring        # the factoring toolbox, calibrated first
 ppa run --intent candles          # redshift + standard-candle test of the zeta zeros
 ppa run --intent spacing          # gaps between zeta zeros vs nuclear energy-level laws
+ppa run --intent walk             # zeros walk home: eta walk vs two-way Riemann-Siegel walk
 ppa run --max 1e10 --steps 60     # bigger range, longer exploration
 python -m pytest                  # 11 tests: core, truth, agent, factoring
 ```
@@ -80,7 +81,8 @@ prime-pattern-agent/
     │   ├── curves.py        elliptic curves: |a_p| <= 2 sqrt(p) and Sato-Tate angles
     │   ├── factoring.py     each factoring tool against numbers with different weaknesses
     │   ├── candles.py       zeta zeros as spectral lines (redshift) and standard candles (brightness)
-    │   └── spacing.py       gaps between zeros vs Poisson, GOE (nuclei) and GUE
+    │   ├── spacing.py       gaps between zeros vs Poisson, GOE (nuclei) and GUE
+    │   └── walk.py          zeros walk home: one-way eta walk vs two-way Riemann-Siegel walk
     └── agent/
         ├── planner.py       proposes hypotheses: seed, deepen, combine, refine
         └── loop.py          calibrate -> fixed skills -> explore -> ledger
@@ -209,6 +211,26 @@ A side check of element abundances (Lodders 2010, solar system): after removing 
 and the even/odd (Oddo-Harkins) effect, odd elements with a prime number of protons look ~5x more
 common (p = 0.04), but that is driven by nitrogen (next to spallation-depleted boron) and fluorine.
 Without Z < 11, p = 0.16; beyond the iron peak, p = 0.62. No prime signal in abundances.
+
+## Walk home (`ppa run --intent walk`)
+
+**One-way walk:** eta(s) = 1 - 2^-s + 3^-s - ... adds arrows of length 1/sqrt(n) turned by
+t log n. eta = (1 - 2^(1-s)) zeta, so at a zeta zero the walk ends at the origin. Plain partial
+sums wobble by ~1/(2 sqrt N), so it walks toward infinity; averaging neighbouring stops helps.
+
+**Two-way walk (counting back from infinity):** with M = floor(sqrt(t/2pi)) arrows forward,
+the infinite tail folds back as the mirror walk, and one small correction arrow (the
+Riemann-Siegel remainder) closes the gap. Its distance from home is |Z(t)|.
+
+| Zero | Two-way walk | One-way, averaged | One-way, plain |
+| --- | --- | --- | --- |
+| 14.13 | 2 arrows | 148 | 64,773 |
+| 37.59 | 4 arrows | 369 | 142,554 |
+| 40.92 | 4 arrows | 471 | 250,011 |
+
+(arrows needed to get as close to home as the two-way walk does). Null: between zeros neither
+walk comes home (one-way at least 1.42 away, two-way at least 0.71). The zero heights agree
+with the spacing skill's zero finder. `examples/walk_home.py` draws both walks.
 
 ## Moire and zone-plate tools (in the tool tuple)
 

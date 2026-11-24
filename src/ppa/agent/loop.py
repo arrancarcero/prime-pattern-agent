@@ -10,7 +10,7 @@ from ppa.core.sieve import primes_between
 from ppa.skills import REGISTRY
 from ppa.skills.base import Context
 
-FIXED = ("dr_gap", "fano", "spectrum", "gates", "randomness", "nature", "curves", "factoring", "candles", "spacing")
+FIXED = ("dr_gap", "fano", "spectrum", "gates", "randomness", "nature", "curves", "factoring", "candles", "spacing", "walk")
 
 
 def build_context(cfg: dict) -> Context:
@@ -27,7 +27,7 @@ def build_context(cfg: dict) -> Context:
 def run_agent(cfg: dict, intent: str = "all") -> Ledger:
     ledger = Ledger(cfg["output"]["runs_dir"], {"config": cfg, "intent": intent,
                                                 "started": time.strftime("%Y-%m-%d %H:%M:%S")})
-    needs_primes = intent not in ("nature", "curves", "factoring", "candles", "spacing")
+    needs_primes = intent not in ("nature", "curves", "factoring", "candles", "spacing", "walk")
     ctx = build_context(cfg) if needs_primes else Context(cfg, (0, 0), (0, 0), None, None)
 
     if needs_primes:  # contract rule 1
