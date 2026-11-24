@@ -127,7 +127,43 @@ def run(ctx, T=None, **_):
         survived=best == "GUE" and d["Poisson"] > crit and d["GOE"] > crit,
         details={"ks": {k: round(v, 4) for k, v in d.items()}, "small_gap_share": round(small, 5),
                  "hist": np.histogram(s, bins=30, range=(0, 3))[0].tolist()}))
+
+    # 3. Higher up, via the FFT batch walk (Odlyzko-Schonhage style)
+    high = float(ctx.cfg.get("spacing", {}).get("high_T", 1e8))
+    width = float(ctx.cfg.get("spacing", {}).get("high_width", 4000))
+    if high > 0:
+        out.append(high_window(high, width, d["GUE"]))
     return out
+
+
+def high_window(height, width, low_gue, K=2 ** 18):
+    import time
+    from ppa.core.batch_walk import safe_window, z_batch, zeros_in_window
+    lo, hi = safe_window(height, width)
+    delta = (hi - lo) / K
+    tc = lo + delta * (K // 2)
+    t0 = time.time()
+    g = zeros_in_window(tc, delta, K)
+    t_batch = time.time() - t0
+    # accuracy and speed check against the one-height formula on 100 sample heights
+    t, z = z_batch(tc, delta, K)
+    pick = np.random.default_rng(0).choice(K, 100, replace=False)
+    t1 = time.time()
+    zd = hardy_z(t[pick])
+    t_direct = (time.time() - t1) / 100 * K
+    err = float(np.max(np.abs(zd - z[pick])))
+    expected = float((theta(t[-1]) - theta(t[0])) / np.pi)
+    s = np.diff(theta(g) / np.pi)
+    dk = {name: ks(s, cdf) for name, cdf in LAWS.items()}
+    best = min(dk, key=dk.get)
+    return Finding(
+        "spacing", f"FFT batch walk: zero gaps near height {height:.0e}", "established",
+        f"{len(g)} zeros in [{lo:.0f}, {hi:.0f}] (expected ~{expected:.0f}); {K:,} heights by one FFT "
+        f"in {t_batch:.2f}s vs ~{t_direct:.0f}s one at a time, max difference {err:.1e}. "
+        f"KS Poisson {dk['Poisson']:.3f}, GOE {dk['GOE']:.3f}, GUE {dk['GUE']:.3f} "
+        f"(low zeros: GUE {low_gue:.3f}); best fit {best}",
+        survived=best == "GUE" and err < 1e-4 and abs(len(g) - expected) < 5,
+        details={"ks": {k: round(v, 4) for k, v in dk.items()}, "speedup": round(t_direct / max(t_batch, 1e-9))})
 
 
 SKILL = Skill("spacing", "Poisson: zeros scattered independently, no repulsion",

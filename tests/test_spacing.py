@@ -12,3 +12,14 @@ def test_spacing_prefers_gue():
     cal, law = SKILL.run(Context({}, (0, 0), (0, 0), None, None), T=2000)
     assert cal.survived, cal.summary
     assert law.survived and law.details["ks"]["GUE"] < law.details["ks"]["GOE"], law.summary
+
+
+def test_batch_walk_matches_direct():
+    import numpy as np
+    from ppa.core.batch_walk import safe_window, z_batch
+    lo, hi = safe_window(1e7, 100)
+    K = 2 ** 12
+    delta = (hi - lo) / K
+    t, z = z_batch(lo + delta * K // 2, delta, K)
+    pick = np.arange(0, K, 97)
+    assert np.max(np.abs(hardy_z(t[pick]) - z[pick])) < 1e-5

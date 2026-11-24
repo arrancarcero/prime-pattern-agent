@@ -8,7 +8,7 @@ import hashlib
 import inspect
 from collections import namedtuple
 
-from ppa.core.factoring import ecm, fermat, moire, p_minus_1, rho, trial, zone_plate
+from ppa.core.factoring import ecm, fermat, moire, p_minus_1, rho, sign_fft, trial, zone_plate
 
 Tool = namedtuple("Tool", "name fn catches budget")
 
@@ -20,6 +20,7 @@ TOOL_TUPLE: tuple = (
     Tool("ecm",       ecm,       "some curve size p+1-a_p is smooth",  4_000),
     Tool("moire",     moire,     "small beat gap q - p (Fermat in costume)",   20_000),
     Tool("zone_plate", zone_plate, "a small factor, seen as aliasing (trial in costume)", 20_000),
+    Tool("sign_fft",  sign_fft,  "any factor of N up to ~2e6 (dark FFT lines); costs N", 2_000_000),
 )
 
 CALIBRATION: tuple = (
@@ -30,11 +31,15 @@ CALIBRATION: tuple = (
     ("ecm",       1000003 * 1000033,    None),
     ("moire",     10007 * 10009,        10007),
     ("zone_plate", 1009 * 1000000000039, 1009),
+    ("sign_fft",  1009 * 1013,          1009),
 )
 
 # A new tool that claims to be an old method in disguise must give the same answers.
 TWINS: tuple = (("moire", "fermat"), ("zone_plate", "trial"))
 NULL_PRIME = 1_000_000_000_000_037
+# sign_fft would skip the big null prime as too long, which proves nothing; it gets a
+# prime it can actually transform (a prime's FFT has no dark lines, so it must fail).
+NULL_FOR = {"sign_fft": 1_000_003}
 
 
 def fingerprint(tools=TOOL_TUPLE) -> str:
@@ -52,7 +57,7 @@ def verify_tools(tools=TOOL_TUPLE):
         t = next(x for x in tools if x.name == name)
         f, _ = t.fn(N, t.budget)
         ok = f is not None and 1 < f < N and N % f == 0 and (expect is None or f in (expect, N // expect))
-        null_f, _ = t.fn(NULL_PRIME, t.budget)
+        null_f, _ = t.fn(NULL_FOR.get(name, NULL_PRIME), t.budget)
         out.append((name, ok, null_f is None))
     return out
 

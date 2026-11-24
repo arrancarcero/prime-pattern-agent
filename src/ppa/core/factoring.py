@@ -99,6 +99,57 @@ def zone_plate(N, budget):
     return None, budget
 
 
+def jacobi_all(N):
+    """Jacobi symbol (a / N) for every a = 0..N-1, odd N, by quadratic reciprocity:
+    flip and swap only, so it never needs the factors of N."""
+    import numpy as np
+    a = np.arange(N, dtype=np.int64)
+    n = np.full_like(a, N)
+    r = np.ones_like(a)
+    while True:
+        act = a != 0
+        if not act.any():
+            break
+        while True:                              # take out factors of 2
+            ev = act & (a % 2 == 0)
+            if not ev.any():
+                break
+            a[ev] //= 2
+            m8 = n[ev] % 8
+            r[ev] *= np.where((m8 == 3) | (m8 == 5), -1, 1)
+        flip = act & (a % 4 == 3) & (n % 4 == 3)  # reciprocity sign flip
+        r[flip] *= -1
+        a_new = np.where(act, n % np.where(a == 0, 1, a), a)
+        n = np.where(act, a, n)
+        a = a_new
+    return np.where(n == 1, r, 0)
+
+
+def sign_fft(N, budget):
+    """Sign flips + FFT. The Jacobi sign pattern (a / N) is two hidden sign patterns
+    (periods p and q) multiplied together. Its FFT is flat, every frequency exactly
+    sqrt(N) bright, except dark at multiples of p and q (a Gauss-sum fact for primitive
+    characters). The first dark frequency k gives gcd(k, N) = a factor.
+    Deciphers any odd N with distinct prime factors, but the pattern is N long, so it
+    costs ~N steps (trial division needs ~sqrt N). Shor's quantum algorithm runs the same
+    'hide the factors in a period, then Fourier transform' move on about log N qubits."""
+    import numpy as np
+    if N % 2 == 0:
+        return 2, 1
+    r = math.isqrt(N)
+    if r * r == N:                               # p^2: the pattern is not 'primitive'
+        return (r, 1) if r > 1 else (None, 1)
+    if N > budget:
+        return None, 0                           # too long to build within budget
+    mag = np.abs(np.fft.fft(jacobi_all(N).astype(np.float64)))
+    dark = np.nonzero(mag[1:] < 1e-6 * math.sqrt(N))[0] + 1
+    for k in dark:
+        g = math.gcd(int(k), N)
+        if 1 < g < N:
+            return g, N
+    return None, N
+
+
 def rho(N, budget, seed=1):
     if N % 2 == 0:
         return 2, 1

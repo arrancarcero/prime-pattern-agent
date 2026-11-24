@@ -21,3 +21,15 @@ def test_moire_and_zone_plate_match_their_twins():
     assert zone_plate(7 * 1000003, 10)[0] == 7
     for new, old, agree, n in verify_twins(numbers=None):
         assert agree == n, f"{new} disagrees with {old}"
+
+
+def test_sign_fft_dark_lines():
+    from ppa.core.factoring import jacobi_all, sign_fft
+    import numpy as np
+    J = jacobi_all(77)
+    assert J[2] == -1 and J[7] == 0 and J[4] == 1          # (2/77) = (2/7)(2/11) = 1 * -1
+    mag = np.abs(np.fft.fft(J.astype(float)))
+    assert np.allclose(mag[[1, 2, 3]], 77 ** 0.5)          # flat glow
+    assert mag[7] < 1e-9 and mag[11] < 1e-9                # dark at the factors
+    assert sign_fft(1009 * 1013, 2_000_000)[0] == 1009
+    assert sign_fft(1_000_003, 2_000_000)[0] is None       # a prime has no dark lines

@@ -203,6 +203,12 @@ gaps with three laws: Poisson (no repulsion), GOE (nuclei, repulsion ~ s) and GU
 | 3,000 | 2,468 | 0.315 | 0.108 | 0.040 |
 | 10,000 | 10,141 | 0.307 | 0.095 | 0.027 |
 
+Higher up, the **FFT batch walk** (`core/batch_walk.py`, Odlyzko-Schonhage style) evaluates the
+two-way walk at 262,144 heights with one non-uniform FFT: near height 10^8 that takes 0.06 s
+instead of ~67 s one height at a time, matching it to 5e-7. It finds 10,554 zeros in
+[10^8, 10^8 + 4000] (Riemann-von Mangoldt: ~10,557), and their gaps fit GUE with KS 0.010,
+inside the 5% critical value, four times closer than the low zeros.
+
 GUE wins at every height, and its distance shrinks as the zeros get higher (the small gap that
 remains is a known low-height effect). Zeros repel more strongly than nuclear levels, which is
 why a Hilbert-Polya system behind them would have to break time-reversal symmetry.
@@ -211,6 +217,17 @@ A side check of element abundances (Lodders 2010, solar system): after removing 
 and the even/odd (Oddo-Harkins) effect, odd elements with a prime number of protons look ~5x more
 common (p = 0.04), but that is driven by nitrogen (next to spallation-depleted boron) and fluorine.
 Without Z < 11, p = 0.16; beyond the iron peak, p = 0.62. No prime signal in abundances.
+
+## Sign flips + FFT (`sign_fft` in the tool tuple)
+
+The Jacobi sign pattern (a / N), a = 0..N-1, is computed by reciprocity flips without knowing the
+factors. It is two hidden sign patterns (periods p and q) multiplied together, so its FFT glows
+at exactly sqrt(N) at every frequency except dark lines at multiples of p and q; the first dark
+line's gcd with N is a factor (77 -> 7, 1,022,117 -> 1009). It deciphers any odd N with distinct
+prime factors, but the pattern is N long, so it costs ~N steps where trial division needs
+~sqrt(N). Shor's quantum algorithm makes the same move (hide the factors in a period, then
+Fourier transform) on about log N qubits. Its null check uses the prime 1,000,003, which shows
+no dark lines.
 
 ## Walk home (`ppa run --intent walk`)
 
