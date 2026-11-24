@@ -3,7 +3,7 @@ Add a skill: write a module with a `SKILL = Skill(...)`, then list it in MODULES
 from importlib import import_module
 
 MODULES = ("calibrate", "transitions", "dr_gap", "fano", "spectrum",
-           "gates", "randomness", "nature", "curves", "factoring")
+           "gates", "randomness", "nature", "curves", "factoring", "candles")
 
 REGISTRY = {}
 for _m in MODULES:

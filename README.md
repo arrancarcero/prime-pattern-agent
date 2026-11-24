@@ -34,6 +34,7 @@ ppa run --intent explore          # only the self-directed exploration loop
 ppa run --intent nature           # only natural measurements
 ppa run --intent curves           # Hasse-Weil bound and Sato-Tate angles on elliptic curves
 ppa run --intent factoring        # the factoring toolbox, calibrated first
+ppa run --intent candles          # redshift + standard-candle test of the zeta zeros
 ppa run --max 1e10 --steps 60     # bigger range, longer exploration
 python -m pytest                  # 11 tests: core, truth, agent, factoring
 ```
@@ -76,7 +77,8 @@ prime-pattern-agent/
     │   ├── randomness.py    prime-derived sign sequences through the randomness tuple
     │   ├── nature.py        natural measurements: known periods + randomness tuple
     │   ├── curves.py        elliptic curves: |a_p| <= 2 sqrt(p) and Sato-Tate angles
-    │   └── factoring.py     each factoring tool against numbers with different weaknesses
+    │   ├── factoring.py     each factoring tool against numbers with different weaknesses
+    │   └── candles.py       zeta zeros as spectral lines (redshift) and standard candles (brightness)
     └── agent/
         ├── planner.py       proposes hypotheses: seed, deepen, combine, refine
         └── loop.py          calibrate -> fixed skills -> explore -> ledger
@@ -166,6 +168,18 @@ How many 7-digit numbers match 3952806 at each level of information:
 
 The full trail is as long as the number, so it re-encodes the number rather than
 compressing it. The order lives in where the laps happen.
+
+## Standard candles (`ppa run --intent candles`)
+
+The prime error `(psi(x) - x)/sqrt(x)` is a sum of waves, one per zeta zero beta + i*gamma.
+Like galaxy light: each zero's wave stretches as x grows (period 2 pi x / gamma in n), which
+is a fixed spectral line at gamma in log x (redshift). After dividing by sqrt(x), a zero on
+the line shines equally at every distance; an off-line zero brightens by x^(beta - 1/2), like
+the supernovae that revealed dark energy. Far/near brightness gives the implied beta.
+
+Measured, primes to 10^8: 10 lines within 0.005 of the known zero heights; implied beta
+0.497 to 0.505 for all 10. Calibration: a fake zero planted at beta = 0.6, gamma = 35 is read
+back as 0.601. This cannot prove RH: an off-line zero far higher up would stay invisible.
 
 ## Example: RSA-PSS signatures (`examples/pss_demo.py`)
 
