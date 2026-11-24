@@ -129,6 +129,14 @@ GRAVEYARD: tuple[Grave, ...] = (
           "(7 -> 23.22, 11 -> 29.10); reciprocity folds each walk to ~log N steps, but it is a fast "
           "ping, not a compass: zeta zeros are global, a factor is a local secret",
           {}, NEVER),
+    Grave("twins:structure_beyond_small_primes",
+          "twin primes follow each other with a pattern beyond small-prime structure: digital-root "
+          "repeat avoidance, fewer tiny/huge gaps, sub-random Fano factor per cycle",
+          "twins skill, stage B (sieved null)",
+          "all real vs pure randomness (repeat 0.312 vs 0.333, tiny gaps 0.198 vs 0.221, Fano 0.78 "
+          "vs 1); at 1e8 all explained by primes <= 97; at 1e9 by primes <= 1000 (Fano z = -4.2, shrinking)",
+          {"max_n": 1e9, "Q": 1000},
+          {"max_n_above": 1e9}),
     Grave("randomness:tuple_means_secure",
           "a generator that passes the randomness tuple is safe for keys and salts",
           "examples/pss_demo.py",

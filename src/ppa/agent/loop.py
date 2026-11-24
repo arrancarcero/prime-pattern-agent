@@ -12,7 +12,7 @@ from ppa.skills.base import Context
 from ppa.truth.graveyard import FINGERPRINT as GRAVE_FP
 from ppa.truth.graveyard import Graveyard, hypothesis_key
 
-FIXED = ("dr_gap", "fano", "spectrum", "gates", "randomness", "nature", "curves", "factoring", "candles", "spacing", "walk", "quantum")
+FIXED = ("dr_gap", "fano", "spectrum", "gates", "randomness", "nature", "curves", "factoring", "candles", "spacing", "walk", "quantum", "twins")
 
 
 def build_context(cfg: dict) -> Context:
@@ -29,7 +29,7 @@ def build_context(cfg: dict) -> Context:
 def run_agent(cfg: dict, intent: str = "all") -> Ledger:
     ledger = Ledger(cfg["output"]["runs_dir"], {"config": cfg, "intent": intent,
                                                 "started": time.strftime("%Y-%m-%d %H:%M:%S")})
-    needs_primes = intent not in ("nature", "curves", "factoring", "candles", "spacing", "walk", "quantum")
+    needs_primes = intent not in ("nature", "curves", "factoring", "candles", "spacing", "walk", "quantum", "twins")
     ctx = build_context(cfg) if needs_primes else Context(cfg, (0, 0), (0, 0), None, None)
 
     if needs_primes:  # contract rule 1

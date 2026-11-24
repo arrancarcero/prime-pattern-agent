@@ -40,6 +40,7 @@ ppa run --intent candles          # redshift + standard-candle test of the zeta 
 ppa run --intent spacing          # gaps between zeta zeros vs nuclear energy-level laws
 ppa run --intent walk             # zeros walk home: eta walk vs two-way Riemann-Siegel walk
 ppa run --intent quantum          # simulated quantum computer: Shor on 15, 21, 35, 143 + the memory wall
+ppa run --intent twins            # twin primes: count, dr transitions, gaps, per-cycle Fano vs two nulls
 ppa run --max 1e10 --steps 60     # bigger range, longer exploration
 python -m pytest                  # 11 tests: core, truth, agent, factoring
 ```
@@ -248,6 +249,26 @@ prime factors, but the pattern is N long, so it costs ~N steps where trial divis
 ~sqrt(N). Shor's quantum algorithm makes the same move (hide the factors in a period, then
 Fourier transform) on about log N qubits. Its null check uses the prime 1,000,003, which shows
 no dark lines.
+
+## Twin primes (`ppa run --intent twins`)
+
+Counts twin pairs against Hardy-Littlewood (1e9: 3,424,506 vs 3,425,308, ratio 0.99977), then
+measures how twins follow each other: does the next twin repeat the lower twin's digital root
+(2, 5 or 8)? how many tiny and huge gaps? how regular is the count per 30030-block (Fano)?
+Two nulls: stage A keeps only the 22,275 admissible positions of every 510,510 (wheel to 17);
+stage B also strikes positions for every prime up to Q = sqrt(x)/30. Both pick at the real
+density.
+
+| At 1e9 | Real | Random | Wheel to 17 (z) | Sieve to 1000 (z) |
+| --- | --- | --- | --- | --- |
+| Next twin repeats dr | 0.312 | 0.333 | 0.314 (-9.0) | 0.312 (-0.4) |
+| Steps 2 -> 5 -> 8 | 0.348 | 0.333 | 0.347 (+3.6) | 0.347 (+1.9) |
+| Tiny gaps | 0.198 | 0.221 | 0.204 (-36) | 0.197 (+3.4) |
+| Huge gaps | 0.0445 | 0.0498 | 0.0463 (-14) | 0.0445 (+0.7) |
+| Fano per 30030 | 0.778 | 1 | 0.925 (-15) | 0.803 (-4.2) |
+
+Every effect is real and every one is explained by small primes (rediscoveries). The lesson:
+sharper data needs a null that knows more primes (a sieve to 97 was enough at 1e8, not at 1e9).
 
 ## Simulated quantum computer (`ppa run --intent quantum`)
 
